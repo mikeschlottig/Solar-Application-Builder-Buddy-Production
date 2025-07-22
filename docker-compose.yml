@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  builder-buddy:
+    build:
+      context: .
+      dockerfile: e2b.Dockerfile
+    ports:
+      - "5173:5173"
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VITE_ENABLE_AI_FEATURES=true
+      - DATABASE_URL=sqlite:///./builder_buddy.db
+      - CORS_ORIGINS=[\"http://localhost:5173\"]
+    volumes:
+      - ./app:/home/user/app
+      - ./services:/home/user/services
+      - ./logs:/home/user/logs
+    working_dir: /home/user
+    command: ["/home/user/start.sh"]
+    networks:
+      - builder-network
+
+  builder-buddy-railway:
+    build:
+      context: .
+      dockerfile: railway.Dockerfile
+    ports:
+      - "8080:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PRERENDER_TOKEN=${PRERENDER_TOKEN}
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - builder-network
+    profiles:
+      - production
+
+networks:
+  builder-network:
+    driver: bridge
+
+volumes:
+  builder-data:
+    driver: local
+  builder-logs:
+    driver: local
